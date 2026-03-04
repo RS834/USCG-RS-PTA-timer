@@ -1624,6 +1624,8 @@ function closeResult() {
 
 function markResult(outcome) {
   const ev = getCurrentEvent();
+  stopAll();
+  metroPaused = false;
   results[ev.id] = outcome;
   if (outcome==='pass') beepEnd(); else beepFail();
   renderEventList();
