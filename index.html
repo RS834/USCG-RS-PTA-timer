@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>USCG Rescue Swimmer PTA</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RS PTA">
+<meta name="theme-color" content="#00d4ff">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -2020,6 +2025,9 @@ function resetAll() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 renderEventList();
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/USCG-RS-PTA-timer/sw.js');
+}
 </script>
 </body>
 </html>
