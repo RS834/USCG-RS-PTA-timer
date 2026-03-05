@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>USCG Rescue Swimmer PTA</title>
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="RS PTA">
@@ -1108,7 +1109,7 @@ function buildPanel(ev) {
       </div>
     </div>`;
 
-  const passFail = results[ev.id] ? '' : `
+  const passFail = `
     <div class="pass-fail" id="passFail">
       <button class="pf-btn pass-btn ${results[ev.id]==='pass'?'selected':''}" onclick="markResult('pass')">✓ PASS</button>
       <button class="pf-btn fail-btn ${results[ev.id]==='fail'?'selected':''}" onclick="markResult('fail')">✗ FAIL</button>
@@ -1267,6 +1268,8 @@ function startShuttle() {
   document.getElementById('startBtn').onclick = null;
   document.getElementById(`ibox0`).className = 'interval-box current';
   document.getElementById('clockLabel').textContent = 'RUN 1 — MAX 79 SEC';
+  const btn = document.getElementById('startBtn');
+  if (btn) { btn.textContent = 'STOP RUN 1'; btn.className = 'btn btn-danger'; btn.onclick = endShuttleRun; }
 
   runShuttleRound();
 }
@@ -1317,7 +1320,7 @@ function startShuttleRest(run1pass) {
   const lbl = document.getElementById('clockLabel');
   const btn = document.getElementById('startBtn');
   if (lbl) lbl.textContent = 'REST — 5 MINUTES';
-  if (el) { el.className = 'big-time warning'; }
+  if (el) { el.className = 'big-time warning'; el.textContent = fmtTime(restSeconds); }
   beepRest();
 
   const box1 = document.getElementById('ibox1');
@@ -1329,10 +1332,15 @@ function startShuttleRest(run1pass) {
     btn.onclick = () => beginRun2();
   }
 
+  let goFired = false;
   timerInterval = setInterval(() => {
     restSeconds--;
     if (el) el.textContent = fmtTime(restSeconds);
     if (restSeconds <= 10 && restSeconds > 0) beepHigh();
+    if (restSeconds === 3 && !goFired) {
+      goFired = true;
+      setTimeout(() => countdownGo(null), 300);
+    }
     if (restSeconds <= 0) {
       stopTimerInterval();
       beginRun2();
@@ -1629,12 +1637,15 @@ function closeResult() {
 
 function markResult(outcome) {
   const ev = getCurrentEvent();
-  stopAll();
-  metroPaused = false;
   results[ev.id] = outcome;
   if (outcome==='pass') beepEnd(); else beepFail();
   renderEventList();
-  renderPanel(ev);
+
+  // Update pass/fail buttons in place without rebuilding panel
+  const passBtn = document.querySelector('.pf-btn.pass-btn');
+  const failBtn = document.querySelector('.pf-btn.fail-btn');
+  if (passBtn) passBtn.className = 'pf-btn pass-btn' + (outcome==='pass' ? ' selected' : '');
+  if (failBtn) failBtn.className = 'pf-btn fail-btn' + (outcome==='fail' ? ' selected' : '');
 
   // 2-min rest after land events 1-5
   const landIds = ['bwr','pu','sp','pu2','kb'];
