@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="/USCG-RS-PTA-timer/apple-touch-icon.png?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="RS PTA">
 <meta name="theme-color" content="#00d4ff">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
@@ -50,17 +50,19 @@ top: 0;
 z-index: 100;
 }
 .header-title {
-font-family: ‘Bebas Neue’, sans-serif;
-font-size: 28px;
-letter-spacing: 4px;
+font-family: ‘Bebas Neue’, ‘Arial Narrow’, Arial, sans-serif;
+font-size: 22px;
+letter-spacing: 3px;
 color: var(–accent);
 text-shadow: 0 0 20px rgba(0,212,255,0.4);
+white-space: nowrap;
 }
 .header-sub {
-font-family: ‘Share Tech Mono’, monospace;
-font-size: 11px;
+font-family: ‘Share Tech Mono’, ‘Courier New’, monospace;
+font-size: 10px;
 color: var(–muted);
 letter-spacing: 2px;
+white-space: nowrap;
 }
 .pool-toggle {
 display: flex;
