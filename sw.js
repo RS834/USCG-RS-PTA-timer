@@ -1,25 +1,28 @@
-{
-  "name": "USCG Rescue Swimmer PTA",
-  "short_name": "RS PTA",
-  "description": "USCG Rescue Swimmer Physical Training Assessment Timer",
-  "start_url": "/USCG-RS-PTA-timer/",
-  "scope": "/USCG-RS-PTA-timer/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0a0c0f",
-  "theme_color": "#00d4ff",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}
+const CACHE = 'rs-pta-v3';
+const ASSETS = [
+  '/USCG-RS-PTA-timer/',
+  '/USCG-RS-PTA-timer/index.html',
+  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request))
+  );
+});
