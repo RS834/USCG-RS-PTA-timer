@@ -1,8 +1,7 @@
-const CACHE = 'rs-pta-v3';
+const CACHE = 'rs-pta-v4';
 const ASSETS = [
   '/USCG-RS-PTA-timer/',
-  '/USCG-RS-PTA-timer/index.html',
-  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap'
+  '/USCG-RS-PTA-timer/index.html'
 ];
 
 self.addEventListener('install', e => {
@@ -22,7 +21,14 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Network first — fall back to cache only if offline
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
