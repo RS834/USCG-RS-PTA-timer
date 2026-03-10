@@ -528,7 +528,7 @@
 <div class="header">
   <div>
     <div class="header-title">USCG RESCUE SWIMMER PTA</div>
-    <div class="header-sub">PHYSICAL TRAINING ASSESSMENT &nbsp;·&nbsp; v1.5</div>
+    <div class="header-sub">PHYSICAL TRAINING ASSESSMENT &nbsp;·&nbsp; v1.6</div>
   </div>
   <div id="poolControl" style="visibility:hidden">
     <div style="font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;text-align:right;">POOL</div>
@@ -1453,7 +1453,7 @@ function startLapClock(ev) {
     el.textContent = fmtTime(timerSeconds);
     const remaining = tgt - timerSeconds;
 
-    // Fire 5-4-3-2-1 countdown at tgt-5 + 300ms so final word lands on tgt
+    // Fire at tgt-5 + 300ms offset: "Rest" lands at 36.8s, clock ticks to 37 right after
     if (timerSeconds === tgt - 5 && !endCountdownFired) {
       endCountdownFired = true;
       if (isUW && isLastLap) {
@@ -1466,32 +1466,36 @@ function startLapClock(ev) {
     }
 
     if (remaining <= 10 && remaining > 0) el.className = 'big-time warning';
+    else if (remaining <= 0) el.className = 'big-time danger';
     else el.className = 'big-time';
 
     if (timerSeconds >= tgt && !restTriggered) {
       restTriggered = true;
-      el.className = 'big-time success';
-      stopTimerInterval();
+      // Hold at tgt for 1 second so swimmer/judge can see the final time
+      setTimeout(() => {
+        el.className = 'big-time success';
+        stopTimerInterval();
 
-      const box = document.getElementById(`ibox${swimRound}`);
-      if (box) {
-        if (!lapResults[swimRound] || lapResults[swimRound] === 'none') {
-          box.className = 'interval-box done-pass';
-          box.innerHTML = `LAP ${swimRound+1}<br>${fmtTime(timerSeconds)}<br><span style="font-size:10px;letter-spacing:1px;">✓ PASS</span>`;
-          lapResults[swimRound] = 'pass';
-        } else {
-          const parts = box.innerHTML.split('<br>');
-          box.innerHTML = `LAP ${swimRound+1}<br>${fmtTime(timerSeconds)}<br>${parts[2]||''}`;
+        const box = document.getElementById(`ibox${swimRound}`);
+        if (box) {
+          if (!lapResults[swimRound] || lapResults[swimRound] === 'none') {
+            box.className = 'interval-box done-pass';
+            box.innerHTML = `LAP ${swimRound+1}<br>${fmtTime(timerSeconds)}<br><span style="font-size:10px;letter-spacing:1px;">✓ PASS</span>`;
+            lapResults[swimRound] = 'pass';
+          } else {
+            const parts = box.innerHTML.split('<br>');
+            box.innerHTML = `LAP ${swimRound+1}<br>${fmtTime(timerSeconds)}<br>${parts[2]||''}`;
+          }
         }
-      }
 
-      const nextRound = swimRound + 1;
-      if (nextRound >= ev.intervals) {
-        beepEnd();
-        showResult(swimFailed?'fail':'pass', `${ev.intervals}x COMPLETE`, ev.name);
-        return;
-      }
-      beginSwimRest(ev, nextRound);
+        const nextRound = swimRound + 1;
+        if (nextRound >= ev.intervals) {
+          beepEnd();
+          showResult(swimFailed?'fail':'pass', `${ev.intervals}x COMPLETE`, ev.name);
+          return;
+        }
+        beginSwimRest(ev, nextRound);
+      }, 1000);
     }
   }, 1000);
 }
