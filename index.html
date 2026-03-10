@@ -528,7 +528,7 @@
 <div class="header">
   <div>
     <div class="header-title">USCG RESCUE SWIMMER PTA</div>
-    <div class="header-sub">PHYSICAL TRAINING ASSESSMENT</div>
+    <div class="header-sub">PHYSICAL TRAINING ASSESSMENT &nbsp;·&nbsp; v1.5</div>
   </div>
   <div id="poolControl" style="visibility:hidden">
     <div style="font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;text-align:right;">POOL</div>
@@ -710,25 +710,41 @@ function speak(text) {
 
 // Distinct tones for each count — timing driven by setTimeout not speech
 function beepCount(step) {
-  if      (step === 3)     beep(440,  0.12, 0.7, 'sine');
-  else if (step === 2)     beep(550,  0.12, 0.7, 'sine');
-  else if (step === 1)     beep(660,  0.12, 0.7, 'sine');
-  else if (step === 'go')  { beep(1320, 0.08, 0.7); setTimeout(()=>beep(1760,0.12,0.8),80); }
-  else if (step === 'rest'){ beep(440,  0.15, 0.7, 'sine'); setTimeout(()=>beep(330,0.2,0.6,'sine'),120); }
+  if      (step === 5)          beep(330,  0.12, 0.7, 'sine');
+  else if (step === 4)          beep(385,  0.12, 0.7, 'sine');
+  else if (step === 3)          beep(440,  0.12, 0.7, 'sine');
+  else if (step === 2)          beep(550,  0.12, 0.7, 'sine');
+  else if (step === 1)          beep(660,  0.12, 0.7, 'sine');
+  else if (step === 'go')       { beep(1320, 0.08, 0.7); setTimeout(()=>beep(1760,0.12,0.8),80); }
+  else if (step === 'rest')     { beep(440,  0.15, 0.7, 'sine'); setTimeout(()=>beep(330,0.2,0.6,'sine'),120); }
+  else if (step === 'complete') { beep(1760, 0.1, 0.7); setTimeout(()=>beep(2200,0.15,0.8),100); }
 }
 
 function countdownGo(onComplete) {
-  beepCount(3); speak('3');
-  setTimeout(() => { beepCount(2); speak('2'); }, 900);
-  setTimeout(() => { beepCount(1); speak('1'); }, 1800);
-  setTimeout(() => { beepCount('go'); speak('Go'); if (onComplete) onComplete(); }, 2700);
+  beepCount(5); speak('5');
+  setTimeout(() => { beepCount(4); speak('4'); }, 900);
+  setTimeout(() => { beepCount(3); speak('3'); }, 1800);
+  setTimeout(() => { beepCount(2); speak('2'); }, 2700);
+  setTimeout(() => { beepCount(1); speak('1'); }, 3600);
+  setTimeout(() => { beepCount('go'); speak('Go'); if (onComplete) onComplete(); }, 4500);
 }
 
 function countdownRest(onComplete) {
-  beepCount(3); speak('3');
-  setTimeout(() => { beepCount(2); speak('2'); }, 900);
-  setTimeout(() => { beepCount(1); speak('1'); }, 1800);
-  setTimeout(() => { beepCount('rest'); speak('Rest'); if (onComplete) onComplete(); }, 2700);
+  beepCount(5); speak('5');
+  setTimeout(() => { beepCount(4); speak('4'); }, 900);
+  setTimeout(() => { beepCount(3); speak('3'); }, 1800);
+  setTimeout(() => { beepCount(2); speak('2'); }, 2700);
+  setTimeout(() => { beepCount(1); speak('1'); }, 3600);
+  setTimeout(() => { beepCount('rest'); speak('Rest'); if (onComplete) onComplete(); }, 4500);
+}
+
+function countdownComplete(onComplete) {
+  beepCount(5); speak('5');
+  setTimeout(() => { beepCount(4); speak('4'); }, 900);
+  setTimeout(() => { beepCount(3); speak('3'); }, 1800);
+  setTimeout(() => { beepCount(2); speak('2'); }, 2700);
+  setTimeout(() => { beepCount(1); speak('1'); }, 3600);
+  setTimeout(() => { beepCount('complete'); speak('Complete'); if (onComplete) onComplete(); }, 4500);
 }
 
 // ─── STATE ────────────────────────────────────────────────────────────
@@ -978,6 +994,8 @@ function renderPanel(ev) {
   const panel = document.getElementById('activePanel');
   panel.classList.remove('hidden');
   panel.innerHTML = buildPanel(ev);
+  // Scroll panel into view
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
 }
 
 function buildPanel(ev) {
@@ -1339,7 +1357,7 @@ function startShuttleRest(run1pass) {
     restSeconds--;
     if (el) el.textContent = fmtTime(restSeconds);
     if (restSeconds <= 10 && restSeconds > 0) beepHigh();
-    if (restSeconds === 3 && !goFired) {
+    if (restSeconds === 5 && !goFired) {
       goFired = true;
       setTimeout(() => countdownGo(null), 300);
     }
@@ -1413,6 +1431,8 @@ function startSwimInterval() {
 
 function startLapClock(ev) {
   const tgt = getTargetSeconds(ev);
+  const isUW = ev.id === 'uw4x50';
+  const isLastLap = swimRound === ev.intervals - 1;
   timerSeconds = 0;
   timerRunning = true;
 
@@ -1424,29 +1444,30 @@ function startLapClock(ev) {
   if (el) { el.textContent = '00:00'; el.className = 'big-time'; }
 
   let restTriggered = false;
-  let restCountdownFired = false;
+  let endCountdownFired = false;
+
   timerInterval = setInterval(() => {
     timerSeconds++;
     const el = document.getElementById('bigTime');
     if (!el) return;
     el.textContent = fmtTime(timerSeconds);
-
     const remaining = tgt - timerSeconds;
 
-    // Fire 3-2-1-REST so "Rest" lands exactly on tgt (2.7s countdown, fire at tgt-3 + 300ms offset)
-    if (timerSeconds === tgt - 3 && !restCountdownFired) {
-      restCountdownFired = true;
-      setTimeout(() => countdownRest(null), 300);
+    // Fire 5-4-3-2-1 countdown at tgt-5 + 300ms so final word lands on tgt
+    if (timerSeconds === tgt - 5 && !endCountdownFired) {
+      endCountdownFired = true;
+      if (isUW && isLastLap) {
+        setTimeout(() => countdownComplete(null), 300);
+      } else if (isUW && !isLastLap) {
+        setTimeout(() => countdownGo(null), 300);
+      } else {
+        setTimeout(() => countdownRest(null), 300);
+      }
     }
 
-    // Warning color in last 10
-    if (remaining <= 10 && remaining > 0) {
-      el.className = 'big-time warning';
-    } else {
-      el.className = 'big-time';
-    }
+    if (remaining <= 10 && remaining > 0) el.className = 'big-time warning';
+    else el.className = 'big-time';
 
-    // At target time: auto-end lap, begin rest
     if (timerSeconds >= tgt && !restTriggered) {
       restTriggered = true;
       el.className = 'big-time success';
@@ -1459,7 +1480,6 @@ function startLapClock(ev) {
           box.innerHTML = `LAP ${swimRound+1}<br>${fmtTime(timerSeconds)}<br><span style="font-size:10px;letter-spacing:1px;">✓ PASS</span>`;
           lapResults[swimRound] = 'pass';
         } else {
-          // Already manually marked — just update time
           const parts = box.innerHTML.split('<br>');
           box.innerHTML = `LAP ${swimRound+1}<br>${fmtTime(timerSeconds)}<br>${parts[2]||''}`;
         }
@@ -1471,8 +1491,6 @@ function startLapClock(ev) {
         showResult(swimFailed?'fail':'pass', `${ev.intervals}x COMPLETE`, ev.name);
         return;
       }
-
-      // Rest starts immediately at 37 (countdown already spoken)
       beginSwimRest(ev, nextRound);
     }
   }, 1000);
@@ -1496,7 +1514,7 @@ function beginSwimRest(ev, nextRound) {
     restSecs--;
     if (el) el.textContent = fmtTime(restSecs);
     // Fire 3-2-1-GO at 3s remaining + 300ms offset so GO lands exactly on 0
-    if (restSecs === 3 && !goFired) {
+    if (restSecs === 5 && !goFired) {
       goFired = true;
       setTimeout(() => countdownGo(null), 300);
     }
@@ -1790,7 +1808,7 @@ function getPracticeSequence() {
     { label: '5-MIN REST', type: 'rest', duration: 300 },
     { label: '4x50 BUDDY TOW', type: 'interval', intervals: 4, lapDur: isYard ? 75 : 84, restDur: isYard ? 20 : 22 },
     { label: '5-MIN REST', type: 'rest', duration: 300 },
-    { label: '4x50 UW/SWIM', type: 'interval', intervals: 4, lapDur: isYard ? 75 : 84, restDur: 0 },
+    { label: '4x50 UW/SWIM', type: 'interval', intervals: 4, lapDur: isYard ? 75 : 84, restDur: 0, isUW: true },
   ];
 }
 
@@ -1919,7 +1937,7 @@ function runPracticeRest(step) {
       practiceSeconds--;
       setPracticeTime(practiceSeconds, 'warning');
       setPracticeLabel(step.label, 'REST', fmtTime(practiceSeconds));
-      if (practiceSeconds === 3 && !goFired) { goFired = true; setTimeout(() => countdownGo(null), 300); }
+      if (practiceSeconds === 5 && !goFired) { goFired = true; setTimeout(() => countdownGo(null), 300); }
       if (practiceSeconds <= 0) {
         clearInterval(practiceInterval); practiceInterval = null;
         markPracticeStepDone();
@@ -1938,10 +1956,11 @@ function runPracticeInterval(step, lapIndex) {
     runPracticeStep();
     return;
   }
+  const isLastLap = lapIndex === step.intervals - 1;
   practiceSeconds = 0;
   setPracticeLabel(step.label, `LAP ${lapIndex+1} / ${step.intervals}`, `MAX ${fmtTime(step.lapDur)}`);
   setPracticeTime(0, '');
-  let restFired = false;
+  let endFired = false;
   countdownGo(() => {
     const lapTick = () => {
       practiceResumeCallback = lapTick;
@@ -1950,9 +1969,15 @@ function runPracticeInterval(step, lapIndex) {
         practiceSeconds++;
         const remaining = step.lapDur - practiceSeconds;
         setPracticeTime(practiceSeconds, remaining <= 10 ? 'warning' : '');
-        if (practiceSeconds === step.lapDur - 3 && !restFired) {
-          restFired = true;
-          setTimeout(() => countdownRest(null), 300);
+        if (practiceSeconds === step.lapDur - 5 && !endFired) {
+          endFired = true;
+          if (step.isUW && isLastLap) {
+            setTimeout(() => countdownComplete(null), 300);
+          } else if (step.isUW && !isLastLap) {
+            setTimeout(() => countdownGo(null), 300);
+          } else {
+            setTimeout(() => countdownRest(null), 300);
+          }
         }
         if (practiceSeconds >= step.lapDur) {
           clearInterval(practiceInterval); practiceInterval = null;
@@ -1986,7 +2011,7 @@ function runPracticeIntervalRest(step, nextLap) {
       restSecs--;
       setPracticeTime(restSecs, 'warning');
       setPracticeLabel(step.label, `REST — LAP ${nextLap+1} NEXT`, fmtTime(restSecs));
-      if (restSecs === 3 && !goFired) { goFired = true; setTimeout(() => countdownGo(null), 300); }
+      if (restSecs === 5 && !goFired) { goFired = true; setTimeout(() => countdownGo(null), 300); }
       if (restSecs <= 0) {
         clearInterval(practiceInterval); practiceInterval = null;
         runPracticeInterval(step, nextLap);
